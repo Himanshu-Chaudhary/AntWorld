@@ -129,8 +129,8 @@ public class ClientRandomWalk
     if (reconnect) packetOut.myAntList = null;
     else
     {
-      //Spawn ants of whatever type you want
-      int numAnts = Constants.INITIAL_FOOD_UNITS / AntType.TOTAL_FOOD_UNITS_TO_SPAWN;
+      //Spawn ants of whatever objType you want
+      int numAnts = 30;//Constants.INITIAL_FOOD_UNITS / AntType.TOTAL_FOOD_UNITS_TO_SPAWN;
       for (int i=0; i<numAnts; i++)
       {
         AntType type = AntType.values()[random.nextInt(AntType.SIZE)];
@@ -389,10 +389,8 @@ public class ClientRandomWalk
     boolean reconnection = false;
     if (args.length > 0) serverHost = args[args.length -1];
 
-    TeamNameEnum team = TeamNameEnum.RandomWalkers;
-    if (args.length > 1)
-    { team = TeamNameEnum.getTeamByString(args[0]);
-    }
+    //TeamNameEnum team = TeamNameEnum.RandomWalkers;
+    TeamNameEnum team = TeamNameEnum.SimpleSolid_3;
     if (args.length > 1)
     { team = TeamNameEnum.getTeamByString(args[0]);
     }

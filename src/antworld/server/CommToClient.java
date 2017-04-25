@@ -8,15 +8,15 @@ import java.net.Socket;
 import antworld.common.NestNameEnum;
 import antworld.common.PacketToServer;
 import antworld.common.PacketToClient;
-import antworld.common.TeamNameEnum;
 import antworld.server.Nest.NestStatus;
 
 public class CommToClient extends Thread
 {
-  private static final boolean DEBUG = true;
+  private static final boolean DEBUG = false;
   private Server server = null;
   private Socket client = null;
-  
+  private boolean clientError = false;
+
   private ObjectInputStream clientReader = null;
   private ObjectOutputStream clientWriter = null;
   private Nest myNest = null;
@@ -27,10 +27,6 @@ public class CommToClient extends Thread
   private volatile int currentPacketOutTick;
   private String errorMsg;
 
-  
-
- 
-  
   public CommToClient(Server server, Socket client)
   {
     this.server = server;
@@ -48,7 +44,6 @@ public class CommToClient extends Thread
         " ***ERROR***: Could not open I/O streams");
     }
   }
-
 
   public void run()
   {
@@ -86,6 +81,7 @@ public class CommToClient extends Thread
 
   public synchronized void pushPacketIn(PacketToServer packetIn)
   {
+    if (packetIn == null) return;
     currentPacketIn = packetIn;
     timeOfLastMessageFromClient = server.getContinuousTime();
     packetIn.timeReceived = timeOfLastMessageFromClient;
@@ -110,7 +106,7 @@ public class CommToClient extends Thread
 
   public synchronized void pushPacketOut(PacketToClient packetOut, int gameTick)
   {
-    System.out.println("CommToClient.pushPacketOut(gameTick="+gameTick+") " +
+    if (DEBUG)System.out.println("CommToClient.pushPacketOut(gameTick="+gameTick+") " +
       currentPacketOutTick + " " + currentPacketInTick);
     currentPacketOutTick = gameTick;
     currentPacketOut = packetOut;
@@ -179,6 +175,7 @@ public class CommToClient extends Thread
     }
     catch (IOException e)
     {
+      clientError = true;
       closeSocket("CommToClient***ERROR***: client has disconnected");
       return null;
     }
@@ -205,12 +202,14 @@ public class CommToClient extends Thread
   
   private void send(PacketToClient data)
   {
+    if (clientError) return;
     try
     {
       if (myNest.getStatus() != NestStatus.CONNECTED)
       {
         System.out.println(myNest);
 
+        clientError = true;
         closeSocket("NOT CONNECTED");
         return;
       }
@@ -220,27 +219,29 @@ public class CommToClient extends Thread
       clientWriter.flush();
       clientWriter.reset();
     }
-    catch (Exception e) 
+    catch (Exception e)
     {
-      closeSocket("CommToClient.send()" + e.getMessage());
+      clientError = true;
+      closeSocket("CommToClient.send() " + e.getMessage());
     }
     
   }
-  
-  
   
   public void closeSocket(String msg)
   {
     NestNameEnum nestName = null;
     if (myNest != null) nestName = myNest.nestName;
     PacketToClient sendData = new PacketToClient(nestName);
-    sendData.errorMsg = msg + "\n Disconnecting in 5 seconds.";
     System.err.println(sendData.errorMsg);
 
-    send(sendData);
+    if (!clientError) send(sendData);
     if (myNest != null) myNest.disconnectClient();
+    else return;
+    myNest = null;
+    sendData.errorMsg = msg + "\n Disconnecting.";
+    System.err.println(msg);
     try
-    { Thread.sleep(5000);
+    {
       if (clientReader != null) clientReader.close();
       if (clientWriter != null) clientWriter.close();
       if (client != null) client.close();
