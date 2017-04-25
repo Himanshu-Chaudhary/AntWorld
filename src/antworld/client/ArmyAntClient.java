@@ -109,7 +109,7 @@ public class ArmyAntClient
     else
     {
       //Spawn ants of whatever type you want
-      int numAnts = 50;
+      int numAnts = 1;
       for (int i=0; i<numAnts; i++)
       {
         AntType type = AntType.WORKER;
@@ -215,6 +215,9 @@ public class ArmyAntClient
       //Ants in packetIn are only ones server sends us, we need to keep track of all
       //our live ants somewhere.
       PacketToServer packetOut = chooseActionsOfAllAnts(packetIn);
+     // AntType type = AntType.WORKER;
+
+     // packetOut.myAntList.add(new AntData(type, myTeam));
       send(packetOut);
     }
   }
