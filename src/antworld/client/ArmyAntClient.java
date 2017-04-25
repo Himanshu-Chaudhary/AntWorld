@@ -109,10 +109,11 @@ public class ArmyAntClient
     else
     {
       //Spawn ants of whatever type you want
-      int numAnts = Constants.INITIAL_FOOD_UNITS / AntType.TOTAL_FOOD_UNITS_TO_SPAWN;
+      int numAnts = 50;
       for (int i=0; i<numAnts; i++)
       {
-        AntType type = AntType.values()[random.nextInt(AntType.SIZE)];
+        AntType type = AntType.WORKER;
+
         packetOut.myAntList.add(new AntData(type, myTeam)); //default action is BIRTH.
       }
     }
@@ -244,6 +245,7 @@ public class ArmyAntClient
     for (AntData ant : packetIn.myAntList)
     {
       AntAction action = chooseAction(packetIn, ant);
+
       if (action.type != AntAction.AntActionType.NOOP)
       {
         ant.action = action;
@@ -338,7 +340,7 @@ public class ArmyAntClient
     //   precedence.
     if (exitNest(ant, action)) return action;
 
-    if (attackAdjacent(ant, action)) return action;
+    /*if (attackAdjacent(ant, action)) return action;
 
     if (pickUpFoodAdjacent(ant, action)) return action;
 
@@ -350,7 +352,7 @@ public class ArmyAntClient
 
     if (goToFood(ant, action)) return action;
 
-    if (goToGoodAnt(ant, action)) return action;
+    if (goToGoodAnt(ant, action)) return action;*/
 
     if (goExplore(ant, action)) return action;
 
