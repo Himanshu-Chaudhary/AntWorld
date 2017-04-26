@@ -11,6 +11,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Random;
 
 /**
@@ -56,7 +57,14 @@ public class ArmyAntClient
   private int centerX, centerY;
   private Socket clientSocket;
   private static Random random = Constants.random;
-
+  //Todo, totalAntList, hold all of our ants, length = population.
+  //Don't add new ants to list until we get confirmation from server
+  //that they exist.
+  private static ArrayList<AntData> totalAntList = null;
+  private static int population = 0;
+  //todo, Start with LOW_FOOD STATUS, add logic to update game status in GameStatus.java
+  //and check it every 50??? ticks of game.
+  private GameStatus nestStatus = GameStatus.LOW_FOOD;
 
   public ArmyAntClient(String host, TeamNameEnum team, boolean reconnect)
   {
@@ -389,6 +397,10 @@ public class ArmyAntClient
     //birth our ants in exploration groups?
     //?TODO: or we can wait until setupNest(PacketToClient packetIn) is called
     //when we will know the nest. Do the initialization in that method.
+  }
+  public static int getPopulation()
+  {
+    return totalAntList.size();
   }
 
 }
