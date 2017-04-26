@@ -53,18 +53,15 @@ public class ArmyAntClient
   private ObjectInputStream inputStream = null;
   private ObjectOutputStream outputStream = null;
   private boolean isConnected = false;
+  //Keeps track of name and location of its assigned nest
   private NestNameEnum myNestName = null;
   private int centerX, centerY;
   private Socket clientSocket;
   private static Random random = Constants.random;
-  //Todo, totalAntList, hold all of our ants, length = population.
-  //Don't add new ants to list until we get confirmation from server
-  //that they exist.
-  private static ArrayList<AntData> totalAntList = null;
-  private static int population = 0;
   //todo, Start with LOW_FOOD STATUS, add logic to update game status in GameStatus.java
-  //and check it every 50??? ticks of game.
+  //and check it every 50??? ticks of game using the gameLoopCounter
   private GameStatus nestStatus = GameStatus.LOW_FOOD;
+  private static int gameLoopCounter = 0;
 
   public ArmyAntClient(String host, TeamNameEnum team, boolean reconnect)
   {
@@ -116,8 +113,8 @@ public class ArmyAntClient
     if (reconnect) packetOut.myAntList = null;
     else
     {
-      //Spawn ants of whatever type you want
-      int numAnts = 1;
+      //TODO Spawn ants of whatever type you want
+      int numAnts = 10;
       for (int i=0; i<numAnts; i++)
       {
         AntType type = AntType.WORKER;
@@ -250,9 +247,48 @@ public class ArmyAntClient
   }
 
 
-  private PacketToServer chooseActionsOfAllAnts(PacketToClient packetIn)
+
+   private PacketToServer chooseActionsOfAllAnts(PacketToClient packetIn)
   {
     PacketToServer packetOut = new PacketToServer(myTeam);
+    gameLoopCounter += 1;
+    if(gameLoopCounter > 50)
+    {
+      //DSR added getStatus, check what state the nest is in
+      //TODO logic to determine what to do depending on game state, evaluated every 50 moves
+      //I have this set up so we would have a class to evaluate each game state
+      gameLoopCounter = 0;
+      nestStatus = GameStatus.getStatus(nestStatus, packetIn);
+      if(nestStatus == GameStatus.LOW_POPULATION)
+      {
+        //evaluate what type of ants we need and how to deploy them
+      }
+      else if(nestStatus == GameStatus.EMERGENCY_STATUS)
+      {
+        System.out.println("EMERGENCY STATUS");
+        System.out.println(packetIn.toString());
+        //special method to determine whats going wrong, output to
+        //console
+        //packetOut = method-what to do(packetIn, other data we may want to include)
+      }
+      else if(nestStatus == GameStatus.ATTACKING)
+      {
+
+      }
+      else if(nestStatus == GameStatus.DEFENDING)
+      {
+
+      }
+      else if(nestStatus == GameStatus.LOW_FOOD)
+      {
+
+      }
+      else //LOW_WATER
+      {
+        //reassign some ants to get water
+      }
+    }
+
     for (AntData ant : packetIn.myAntList)
     {
       AntAction action = chooseAction(packetIn, ant);
@@ -397,10 +433,6 @@ public class ArmyAntClient
     //birth our ants in exploration groups?
     //?TODO: or we can wait until setupNest(PacketToClient packetIn) is called
     //when we will know the nest. Do the initialization in that method.
-  }
-  public static int getPopulation()
-  {
-    return totalAntList.size();
   }
 
 }

@@ -2,6 +2,7 @@ package antworld.client;
 
 import antworld.common.NestData;
 import antworld.common.NestNameEnum;
+import antworld.common.PacketToClient;
 
 /**
  * Created by Deb Rezanka on 4/25/2017.
@@ -23,13 +24,13 @@ public enum GameStatus
   EMERGENCY_STATUS;
   //TODO, logic for each game status
   //TODO, ATTACKING, DEFENDING set in ArmyAntClient using the prevStatus here
-  public GameStatus getStatus(NestData[] nestData, GameStatus prevStatus, NestNameEnum myNest)
+  public static GameStatus getStatus(GameStatus prevStatus, PacketToClient packetIn)
   {
-    NestData myData = nestData[myNest.ordinal()];
+    NestData myData = packetIn.nestData[packetIn.myNest.ordinal()];
     int myFood = myData.foodInNest;
     int myWater = myData.waterInNest;
     int score = myData.score;
-    int numberOfAnts = ArmyAntClient.getPopulation();
+    int numberOfAnts = packetIn.myAntList.size();
 
     GameStatus status = prevStatus;
 
