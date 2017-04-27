@@ -29,6 +29,24 @@ class PathNode
     this.f = 0;
   }
 
+  @Override
+  public boolean equals(Object o)
+  {
+    if(o.getClass()!=getClass())
+    {
+      return false;
+    }
+    else
+    {
+      PathNode other = (PathNode)o;
+      if(other.getX() == x && other.getY() == y)
+      {
+        return true;
+      }
+    }
+    return false;
+  }
+
   //Below are the standard setters and getters for this structure
   //@Kirtus L
   public double getH()

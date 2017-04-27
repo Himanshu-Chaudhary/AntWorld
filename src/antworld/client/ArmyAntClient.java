@@ -348,11 +348,12 @@ public class ArmyAntClient
 
 
     //updates the group first
-    for (AntGroup group : groups){
+    for (AntGroup group : groups)
+    {
       if(toSpawn.contains(group))
       {
         group.spawn(centerX,centerY);
-        group.setGoal(new PathNode(centerX + 10, centerY + 10));
+        group.setGoal(new PathNode(centerX + 70, centerY + 70));
         group.findPath();
         toSpawn.remove(group);
       }

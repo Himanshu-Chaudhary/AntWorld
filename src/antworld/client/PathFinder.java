@@ -1,10 +1,13 @@
 package antworld.client;
 
 import antworld.common.LandType;
+import antworld.common.Util;
 import com.sun.org.apache.xpath.internal.SourceTree;
 import sun.awt.image.ImageWatched;
 
 import java.awt.image.BufferedImage;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 /**
@@ -18,10 +21,10 @@ public class PathFinder
   private int width;
   private int height;
   //These lists are for the A* algorithm
-  private LinkedList<PathNode> closedList;
-  private LinkedList<PathNode> openList;
-  private LinkedList<PathNode> emptyList;
-  private LinkedList<PathNode> adjacencyList;
+  private ArrayList<PathNode> closedList;
+  private ArrayList<PathNode> openList;
+  private ArrayList<PathNode> emptyList;
+  private ArrayList<PathNode> adjacencyList;
 
   public PathFinder(BufferedImage map)
   {
@@ -30,7 +33,7 @@ public class PathFinder
     this.height = map.getHeight();
   }
 
-  public LinkedList<PathNode> generatePath(PathNode start, PathNode goal)
+  public ArrayList<PathNode> generatePath(PathNode start, PathNode goal)
   {
 
     if(!nodeLegal(goal) || !nodeLegal(start))
@@ -39,10 +42,10 @@ public class PathFinder
     }
 
 
-    LinkedList<PathNode> closedList = new LinkedList<PathNode>();
-    LinkedList<PathNode> openList = new LinkedList<PathNode>();
-    LinkedList<PathNode> emptyList = new LinkedList<PathNode>();
-    LinkedList<PathNode> adjacencyList = new LinkedList<PathNode>();
+    ArrayList<PathNode> closedList = new ArrayList<PathNode>();
+    ArrayList<PathNode> openList = new ArrayList<PathNode>();
+    ArrayList<PathNode> emptyList = new ArrayList<PathNode>();
+    ArrayList<PathNode> adjacencyList = new ArrayList<PathNode>();
     PathNode currentNode;
     boolean done = false;
 
@@ -65,7 +68,8 @@ public class PathFinder
       adjacencyList = calcAdjacencies(currentNode, closedList);
       for(PathNode currAdj: adjacencyList)
       {
-        if(!openList.contains(currAdj)) {
+        if(!openList.contains(currAdj))
+        {
           currAdj.setParent(currentNode);
           currAdj.setH(manhattan(currAdj, goal));
           currAdj.setG(currentNode.getG() + manhattan(currAdj, currentNode));
@@ -94,9 +98,9 @@ public class PathFinder
   }
 
   //Follows the chain of pathnodes backwards to generate the path
-  private LinkedList<PathNode> buildPath(PathNode start, PathNode goal)
+  private ArrayList<PathNode> buildPath(PathNode start, PathNode goal)
   {
-    LinkedList<PathNode> path = new LinkedList<PathNode>();
+    ArrayList<PathNode> path = new ArrayList<PathNode>();
     PathNode current = goal;
     boolean done = false;
     while(!done)
@@ -119,9 +123,9 @@ public class PathFinder
 
   //Returns legal adjacent nodes to input node
   //@Kirtus L.
-  private LinkedList<PathNode> calcAdjacencies(PathNode node, LinkedList<PathNode> closedList)
+  private ArrayList<PathNode> calcAdjacencies(PathNode node, ArrayList<PathNode> closedList)
   {
-    LinkedList<PathNode> adjTiles = new LinkedList<>();
+    ArrayList<PathNode> adjTiles = new ArrayList<PathNode>();
     int x = node.getX();
     int y = node.getY();
     PathNode temp;
@@ -184,15 +188,10 @@ public class PathFinder
 
     if(temp.getX() < 0 || temp.getX() >= width)
     {
-      System.out.println("x error, x: " + temp.getX());
-      System.out.println(width);
-      System.exit(0);
       return false;
     }
     if(temp.getY() < 0 || temp.getY() >= height)
     {
-      System.out.println("y error");
-      System.exit(0);
       return false;
     }
     if(rgb == LandType.WATER.getMapColor())
@@ -203,7 +202,7 @@ public class PathFinder
   }
 
   //This is a helper method for pathfinding heuristic usage
-  private PathNode findLowestFValue(LinkedList<PathNode> list)
+  private PathNode findLowestFValue(ArrayList<PathNode> list)
   {
     double lowestF = list.get(0).getF();
     PathNode lowestFPathNode = list.get(0);
@@ -223,7 +222,7 @@ public class PathFinder
   //@Kirtus L
   private double manhattan(PathNode start, PathNode goal)
   {
-    return(Math.abs(start.getX()-goal.getX()) + Math.abs(start.getY()-goal.getY()));
+    return(Util.manhattanDistance(start.getX(), start.getY(), goal.getX(), goal.getY()));
   }
 
   private boolean outOfBounds(int[] vector)

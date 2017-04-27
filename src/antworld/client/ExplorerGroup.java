@@ -3,6 +3,7 @@ package antworld.client;
 import antworld.common.*;
 import sun.awt.image.ImageWatched;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 /**
@@ -14,63 +15,64 @@ public class ExplorerGroup extends AntGroup{
   private PathFinder pathFinder;
   private int x;
   private int y;
-  private LinkedList<PathNode> path = new LinkedList<PathNode>();
-  private LinkedList<PathNode> emptyPath = new LinkedList<PathNode>();
+  private ArrayList<PathNode> path = new ArrayList<PathNode>();
+  private ArrayList<PathNode> emptyPath = new ArrayList<PathNode>();
   private int[][] relativePositions;
   private int currentPathSpot = 0;
 
     public ExplorerGroup(TeamNameEnum myTeam, PathFinder pathFinder)
     {
-      int numAnts = 5;
+      int numAnts = 30;
       for (int i = 0; i < numAnts; i++)
       {
         this.antlist.add(new AntData(AntType.EXPLORER, myTeam));
         //Setting up relative positions
-        setUpPositions(numAnts);
       }
+      setUpPositions(numAnts);
       this.pathFinder = pathFinder;
-
     }
 
   private void setUpPositions(int numAnts)
   {
     relativePositions = new int[numAnts][2]; //Index 1 is ant index, index 2 is x (0) and y (1)
-    relativePositions[0][0] = 0;
-    relativePositions[0][1] = 0;
-    relativePositions[1][0] = 1;
-    relativePositions[1][1] = 0;
-    relativePositions[2][0] = 2;
-    relativePositions[2][1] = 0;
-    relativePositions[3][0] = 3;
-    relativePositions[3][1] = 0;
-    relativePositions[4][0] = 4;
-    relativePositions[4][1] = 0;
+    for(int i = 0; i < numAnts; i++)
+    {
+      relativePositions[i][0] = i;
+      relativePositions[i][1] = 0;
+    }
   }
 
   public void chooseAction()
     {
       if(path != null)
       {
-        if(currentPathSpot < path.size())
+        if(currentPathSpot < path.size() - 1)
         {
           currentPathSpot++;
           x = path.get(currentPathSpot).getX();
           y = path.get(currentPathSpot).getY();
-          for (int antIndex = 0; antIndex < antlist.size(); antIndex++)
-          {
-            AntData ant = antlist.get(antIndex);
-            PathNode antNode = new PathNode(ant.gridX, ant.gridY);
-            PathNode goal = new PathNode(x + relativePositions[antIndex][0], y + relativePositions[antIndex][1]);
-            LinkedList<PathNode> antPath = pathFinder.generatePath(antNode, goal);
-            dir = antNode.getDirectionTo(antPath.get(1));
-            ant.action.type = AntAction.AntActionType.MOVE;
-            ant.action.direction = dir;
-          }
         }
         else
         {
           currentPathSpot = 0;
           path = emptyPath;
+        }
+      }
+      for (int antIndex = 0; antIndex < antlist.size(); antIndex++)
+      {
+        AntData ant = antlist.get(antIndex);
+        PathNode antNode = new PathNode(ant.gridX, ant.gridY);
+        PathNode goal = new PathNode(x + relativePositions[antIndex][0], y + relativePositions[antIndex][1]);
+        if(!antNode.equals(goal))
+        {
+          ArrayList<PathNode> antPath = pathFinder.generatePath(antNode, goal);
+          dir = antNode.getDirectionTo(antPath.get(1));
+          ant.action.type = AntAction.AntActionType.MOVE;
+          ant.action.direction = dir;
+        }
+        else
+        {
+          ant.action.type = AntAction.AntActionType.NOOP;
         }
       }
     }
