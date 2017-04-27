@@ -12,6 +12,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Random;
 
 /**
@@ -62,6 +63,12 @@ public class ArmyAntClient
   //and check it every 50??? ticks of game using the gameLoopCounter
   private GameStatus nestStatus = GameStatus.LOW_FOOD;
   private static int gameLoopCounter = 0;
+
+
+  private HashMap <Integer,AntGroup> assigendAnt= new HashMap<>(); //here integer is the ID number of ant
+  private HashMap <Integer,AntGroup> unAssigendAnt= new HashMap<>(); // here integer is the index in the array
+  ArrayList<AntGroup> toSpawn = new ArrayList<>(); //stores the group that were just created to exit them next turn
+  private ArrayList<AntGroup> groups = new ArrayList<>(); //is the list of all antgroups created
 
   public ArmyAntClient(String host, TeamNameEnum team, boolean reconnect)
   {
@@ -115,12 +122,27 @@ public class ArmyAntClient
     {
       //TODO Spawn ants of whatever type you want
       int numAnts = 10;
-      for (int i=0; i<numAnts; i++)
+      /*for (int i=0; i<numAnts; i++)
       {
         AntType type = AntType.WORKER;
 
         packetOut.myAntList.add(new AntData(type, myTeam)); //default action is BIRTH.
+    }*/
+
+      //creates an explorergroup
+      toSpawn.add(new explorerGroup(myTeam));
+      groups.addAll(toSpawn);
+
+      for (AntGroup group : groups){
+        if (assigendAnt.containsValue(group)) packetOut.myAntList.addAll(group.getAntList());
+        else {
+          for (AntData ant: group.getAntList()){
+            unAssigendAnt.put(packetOut.myAntList.size(), group);
+            packetOut.myAntList.add(ant);
+          }
+        }
       }
+
     }
     send(packetOut);
     return true;
@@ -219,11 +241,31 @@ public class ArmyAntClient
       //TODO: Here is where we need to branch out
       //Ants in packetIn are only ones server sends us, we need to keep track of all
       //our live ants somewhere.
+      updateAntGroups(packetIn.myAntList);
       PacketToServer packetOut = chooseActionsOfAllAnts(packetIn);
      // AntType type = AntType.WORKER;
 
      // packetOut.myAntList.add(new AntData(type, myTeam));
       send(packetOut);
+    }
+  }
+
+  // updates all ant to its groups
+  private void updateAntGroups(ArrayList<AntData> antlist){
+    int count = 0;
+    for (AntGroup group : groups){
+      group.remove();
+    }
+    for (AntData ant : antlist) {
+
+      if (unAssigendAnt.containsKey(count)) {
+        AntGroup temp = unAssigendAnt.get(count);
+        assigendAnt.put(ant.id, temp);
+        temp.addAnt(ant);
+        unAssigendAnt.remove(count);
+      }
+      else assigendAnt.get(ant.id).addAnt(ant);
+      count++;
     }
   }
 
@@ -289,8 +331,22 @@ public class ArmyAntClient
       }
     }
 
+
+    //updates the group first
+    for (AntGroup group : groups){
+      if(toSpawn.contains(group)) {
+        group.spawn(centerX,centerY);
+        toSpawn.remove(group);
+      }
+      else group.chooseAction();
+      packetOut.myAntList.addAll(group.getAntList());
+    }
+
+    /*
     for (AntData ant : packetIn.myAntList)
     {
+
+
       AntAction action = chooseAction(packetIn, ant);
 
       if (action.type != AntAction.AntActionType.NOOP)
@@ -298,9 +354,11 @@ public class ArmyAntClient
         ant.action = action;
         packetOut.myAntList.add(ant);
       }
-    }
+    }*/
     return packetOut;
   }
+
+
 
 
 
