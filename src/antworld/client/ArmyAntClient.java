@@ -6,6 +6,9 @@ package antworld.client;
 
 import antworld.common.*;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -64,16 +67,28 @@ public class ArmyAntClient
   private GameStatus nestStatus = GameStatus.LOW_FOOD;
   private static int gameLoopCounter = 0;
 
-
   private HashMap <Integer,AntGroup> assigendAnt= new HashMap<>(); //here integer is the ID number of ant
   private HashMap <Integer,AntGroup> unAssigendAnt= new HashMap<>(); // here integer is the index in the array
   ArrayList<AntGroup> toSpawn = new ArrayList<>(); //stores the group that were just created to exit them next turn
   private ArrayList<AntGroup> groups = new ArrayList<>(); //is the list of all antgroups created
 
+  //Map utilities @KirtusL
+  private int worldWidth; //width of map
+  private int worldHeight; //height of map
+  private BufferedImage map; //The map to be used
+  private PathFinder pathFinder;
+
   public ArmyAntClient(String host, TeamNameEnum team, boolean reconnect)
   {
     myTeam = team;
     System.out.println("Starting " + team +" on " + host + " reconnect = " + reconnect);
+
+    //Loading the map
+    //@Kirtus L
+    map = Util.loadImage("AntWorld.png", null);
+    worldWidth = map.getWidth();
+    worldHeight = map.getHeight();
+    pathFinder = new PathFinder(map);
 
     isConnected = openConnection(host, reconnect);
     if (!isConnected) System.exit(0);
@@ -130,7 +145,7 @@ public class ArmyAntClient
     }*/
 
       //creates an explorergroup
-      toSpawn.add(new explorerGroup(myTeam));
+      toSpawn.add(new ExplorerGroup(myTeam, pathFinder));
       groups.addAll(toSpawn);
 
       for (AntGroup group : groups){
@@ -334,11 +349,17 @@ public class ArmyAntClient
 
     //updates the group first
     for (AntGroup group : groups){
-      if(toSpawn.contains(group)) {
+      if(toSpawn.contains(group))
+      {
         group.spawn(centerX,centerY);
+        group.setGoal(new PathNode(centerX + 10, centerY + 10));
+        group.findPath();
         toSpawn.remove(group);
       }
-      else group.chooseAction();
+      else
+      {
+        group.chooseAction();
+      }
       packetOut.myAntList.addAll(group.getAntList());
     }
 

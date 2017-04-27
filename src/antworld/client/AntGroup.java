@@ -45,6 +45,10 @@ public abstract  class AntGroup
   abstract void spawn(int x, int y);
   abstract void chooseAction();
 
+  //
+  abstract void setGoal(PathNode goal);
+  abstract void findPath();
+
   }
 
 
