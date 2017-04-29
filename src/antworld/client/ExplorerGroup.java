@@ -3,8 +3,11 @@ package antworld.client;
 import antworld.common.*;
 import sun.awt.image.ImageWatched;
 
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 /**
  * Created by hiManshu on 4/26/2017.
@@ -19,14 +22,18 @@ public class ExplorerGroup extends AntGroup{
   private ArrayList<PathNode> emptyPath = new ArrayList<PathNode>();
   private int[][] relativePositions;
   private int currentPathSpot = 0;
+  private BufferedImage map = Util.loadImage("AntWorld.png", null);;
+  private Map<Integer,Direction> directionMap = new HashMap<>();
 
     public ExplorerGroup(TeamNameEnum myTeam, PathFinder pathFinder)
     {
       int numAnts = 30;
       for (int i = 0; i < numAnts; i++)
       {
-        this.antlist.add(new AntData(AntType.EXPLORER, myTeam));
+        AntData tempData = new AntData(AntType.EXPLORER,myTeam);
+        this.antlist.add(tempData);
         //Setting up relative positions
+
       }
       setUpPositions(numAnts);
       this.pathFinder = pathFinder;
@@ -42,7 +49,7 @@ public class ExplorerGroup extends AntGroup{
     }
   }
 
-  public void chooseAction()
+  /*public void chooseAction()
     {
       if(path != null)
       {
@@ -75,7 +82,72 @@ public class ExplorerGroup extends AntGroup{
           ant.action.type = AntAction.AntActionType.NOOP;
         }
       }
+    }*/
+
+  public void chooseAction()
+  {
+    for (int antIndex = 0; antIndex < antlist.size(); antIndex++)
+    {
+      explore(antlist.get(antIndex));
     }
+  }
+
+  public void explore(AntData ant)
+  {
+    int mapColor = getMapColor(ant);
+    Direction dir;
+
+   if(mapColor == LandType.WATER.getMapColor())
+    {
+      dir = setDirection(ant);
+      directionMap.replace(ant.id,directionMap.get(ant.id),dir);
+    }
+    ant.action.type = AntAction.AntActionType.MOVE;
+    ant.action.direction = directionMap.get(ant.id);
+
+  }
+
+  public Direction setDirection(AntData ant)
+  {
+
+    return Direction.getRandomDir();
+  }
+
+  public int getMapColor(AntData ant)
+  {
+
+    int tempx = ant.gridX;
+    int tempy = ant.gridY;
+    int color = 0;
+    if(directionMap.get(ant.id) == Direction.EAST) tempx ++;
+    else if(directionMap.get(ant.id) == Direction.WEST) tempx --;
+    else if(directionMap.get(ant.id) == Direction.NORTH) tempy --;
+    else if(directionMap.get(ant.id) == Direction.SOUTH) tempy ++;
+    else if(directionMap.get(ant.id) == Direction.NORTHEAST)
+    {
+      tempx ++;
+      tempy --;
+    }
+    else if(directionMap.get(ant.id) == Direction.SOUTHEAST)
+    {
+      tempx ++;
+      tempy ++;
+    }
+    else if(directionMap.get(ant.id) == Direction.NORTHWEST)
+    {
+      tempx --;
+      tempy --;
+    }
+    else if(directionMap.get(ant.id) == Direction.SOUTHWEST)
+    {
+      tempx --;
+      tempy ++;
+    }
+
+
+    return (map.getRGB(tempx, tempy) & 0x00FFFFFF);
+
+  }
 
     //needs work
     //spawns in a line for now
@@ -89,6 +161,7 @@ public class ExplorerGroup extends AntGroup{
          ant.action.type = AntAction.AntActionType.EXIT_NEST;
          ant.action.x = x;
          ant.action.y = y;
+         directionMap.put(ant.id,Direction.getRandomDir());
          if (temp) x++;
          else y++;
          temp = !temp;
