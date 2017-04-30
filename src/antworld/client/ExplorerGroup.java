@@ -14,35 +14,35 @@ import java.util.Map;
  */
 public class ExplorerGroup extends AntGroup{
 
-  private PathNode goal;
-  private PathFinder pathFinder;
-  private int x;
-  private int y;
-  private ArrayList<PathNode> path = new ArrayList<PathNode>();
-  private ArrayList<PathNode> emptyPath = new ArrayList<PathNode>();
-  private int[][] relativePositions;
-  private int currentPathSpot = 0;
-  private BufferedImage map = Util.loadImage("AntWorld.png", null);;
-  private Map<Integer,Direction> directionMap = new HashMap<>();
+  PathNode goal;
+  PathFinder pathFinder;
+  int x;
+  int y;
+  ArrayList<PathNode> path = new ArrayList<PathNode>();
+  ArrayList<PathNode> emptyPath = new ArrayList<PathNode>();
+  int[][] relativePositions;
+  int currentPathSpot = 0;
+  BufferedImage map = Util.loadImage("AntWorld.png", null);;
+  Map<Integer,Direction> directionMap = new HashMap<>();
 
-    public ExplorerGroup(TeamNameEnum myTeam, PathFinder pathFinder)
-    {
-      int numAnts = 30;
-      for (int i = 0; i < numAnts; i++)
-      {
-        AntData tempData = new AntData(AntType.EXPLORER,myTeam);
-        this.antlist.add(tempData);
-        //Setting up relative positions
-
-      }
-      setUpPositions(numAnts);
-      this.pathFinder = pathFinder;
-    }
-
-  private void setUpPositions(int numAnts)
+  public ExplorerGroup(TeamNameEnum myTeam, PathFinder pathFinder)
   {
-    relativePositions = new int[numAnts][2]; //Index 1 is ant index, index 2 is x (0) and y (1)
-    for(int i = 0; i < numAnts; i++)
+    count = 3;
+    for (int i = 0; i < count; i++)
+    {
+      AntData tempData = new AntData(AntType.EXPLORER,myTeam);
+      this.antlist.add(tempData);
+      //Setting up relative positions
+
+    }
+    setUpPositions();
+    this.pathFinder = pathFinder;
+  }
+
+  void setUpPositions()
+  {
+    relativePositions = new int[count][2]; //Index 1 is ant index, index 2 is x (0) and y (1)
+    for(int i = 0; i < count; i++)
     {
       relativePositions[i][0] = i;
       relativePositions[i][1] = 0;
@@ -97,7 +97,7 @@ public class ExplorerGroup extends AntGroup{
     int mapColor = getMapColor(ant);
     Direction dir;
 
-   if(mapColor == LandType.WATER.getMapColor())
+    if(mapColor == LandType.WATER.getMapColor())
     {
       dir = setDirection(ant);
       directionMap.replace(ant.id,directionMap.get(ant.id),dir);
@@ -115,7 +115,6 @@ public class ExplorerGroup extends AntGroup{
 
   public int getMapColor(AntData ant)
   {
-
     int tempx = ant.gridX;
     int tempy = ant.gridY;
     int color = 0;
@@ -143,30 +142,28 @@ public class ExplorerGroup extends AntGroup{
       tempx --;
       tempy ++;
     }
-
-
     return (map.getRGB(tempx, tempy) & 0x00FFFFFF);
 
   }
 
-    //needs work
-    //spawns in a line for now
-     void spawn(int x, int y)
-     {
-       this.x = x;
-       this.y = y;
-       boolean temp = true;
-       for (AntData ant : antlist)
-       {
-         ant.action.type = AntAction.AntActionType.EXIT_NEST;
-         ant.action.x = x;
-         ant.action.y = y;
-         directionMap.put(ant.id,Direction.getRandomDir());
-         if (temp) x++;
-         else y++;
-         temp = !temp;
-       }
+  //needs work
+  //spawns in a line for now
+  void spawn(int x, int y)
+  {
+    this.x = x;
+    this.y = y;
+    boolean temp = true;
+    for (AntData ant : antlist)
+    {
+      ant.action.type = AntAction.AntActionType.EXIT_NEST;
+      ant.action.x = x;
+      ant.action.y = y;
+      directionMap.put(ant.id,Direction.getRandomDir());
+      if (temp) x++;
+      else y++;
+      temp = !temp;
     }
+  }
 
   /**
    * Sets the goal of the group

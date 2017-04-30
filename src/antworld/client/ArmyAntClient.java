@@ -72,11 +72,17 @@ public class ArmyAntClient
   ArrayList<AntGroup> toSpawn = new ArrayList<>(); //stores the group that were just created to exit them next turn
   private ArrayList<AntGroup> groups = new ArrayList<>(); //is the list of all antgroups created
 
+
+  private ArrayList<WorkerGroup> workerGroups = new ArrayList<>();
+
   //Map utilities @KirtusL
   private int worldWidth; //width of map
   private int worldHeight; //height of map
   private BufferedImage map; //The map to be used
   private PathFinder pathFinder;
+
+  //FoodData
+  ArrayList<FoodData> foodList = new ArrayList<>();
 
   public ArmyAntClient(String host, TeamNameEnum team, boolean reconnect)
   {
@@ -145,22 +151,34 @@ public class ArmyAntClient
     }*/
 
       //creates an explorergroup
-      toSpawn.add(new ExplorerGroup(myTeam, pathFinder));
-      groups.addAll(toSpawn);
 
-      for (AntGroup group : groups){
-        if (assigendAnt.containsValue(group)) packetOut.myAntList.addAll(group.getAntList());
-        else {
-          for (AntData ant: group.getAntList()){
-            unAssigendAnt.put(packetOut.myAntList.size(), group);
-            packetOut.myAntList.add(ant);
-          }
-        }
+      for (int i = 0; i < 5; i++){
+        addGroup(new ExplorerGroup(myTeam, pathFinder), packetOut);
       }
+
 
     }
     send(packetOut);
     return true;
+
+  }
+
+  /**
+   *
+   * @param group
+   * @param packetOut
+   *
+   * add a  new group and also adds it to the packet to the server's antlist
+   */
+  void addGroup (AntGroup group, PacketToServer packetOut){
+    toSpawn.add(group);
+    groups.add(group);
+
+    for (AntData ant: group.getAntList()){
+      System.out.println("Adding ant to list at index " + packetOut.myAntList.size());
+      unAssigendAnt.put(packetOut.myAntList.size(), group);
+      packetOut.myAntList.add(ant);
+    }
 
   }
 
@@ -256,11 +274,15 @@ public class ArmyAntClient
       //TODO: Here is where we need to branch out
       //Ants in packetIn are only ones server sends us, we need to keep track of all
       //our live ants somewhere.
-      updateAntGroups(packetIn.myAntList);
-      PacketToServer packetOut = chooseActionsOfAllAnts(packetIn);
-     // AntType type = AntType.WORKER;
 
-     // packetOut.myAntList.add(new AntData(type, myTeam));
+
+      PacketToServer packetOut = new PacketToServer(myTeam) ;
+
+
+      packetOut = chooseActionsOfAllAnts(packetIn);
+      // AntType type = AntType.WORKER;
+
+      // packetOut.myAntList.add(new AntData(type, myTeam));
       send(packetOut);
     }
   }
@@ -272,16 +294,67 @@ public class ArmyAntClient
       group.remove();
     }
     for (AntData ant : antlist) {
-
       if (unAssigendAnt.containsKey(count)) {
+        System.out.println("Removing ant to list at index " + count);
         AntGroup temp = unAssigendAnt.get(count);
         assigendAnt.put(ant.id, temp);
         temp.addAnt(ant);
         unAssigendAnt.remove(count);
       }
-      else assigendAnt.get(ant.id).addAnt(ant);
+
+      else {
+        assigendAnt.get(ant.id).addAnt(ant);
+        System.out.println("updating ant to list at index " + count + "with Id" + ant.id);
+      }
+
       count++;
     }
+  }
+
+  private void updateReceivedData(PacketToClient packetIn, PacketToServer packetOut){
+
+    if (packetIn.foodList != null) {
+      for (FoodData food : packetIn.foodList){
+        System.out.println("Food List Size --------------FOUND---------------------------------" );
+        if (!isContainedInFoodList(food)) foodList.add(food);
+        assignWorkerGroup(1,food,packetOut);
+      }
+    }
+
+
+  }
+
+  boolean isContainedInFoodList(FoodData food){
+    for (FoodData fooddata : foodList){
+      if (fooddata.gridX == food.gridX && fooddata.gridY == food.gridY) return true;
+
+    }
+    return false;
+  }
+
+  /**
+   *
+   * @param num
+   * @param food
+   *
+   * assign a certain number of Worker Groups to fetch the food
+   */
+  void assignWorkerGroup (int num, FoodData food, PacketToServer packetOut){
+    for (WorkerGroup workerGroup : workerGroups){
+      if (!workerGroup.assigend && num>0) {
+        workerGroup.setGoal(new PathNode(food.gridX,food.gridY));
+        workerGroup.findPath();
+        num --;
+      }
+    }
+    while (num >0){
+      WorkerGroup group = new WorkerGroup(myTeam,pathFinder);
+      addGroup(group, packetOut );
+      group.setGoal(new PathNode(food.gridX,food.gridY));
+      group.findPath();
+      num --;
+    }
+
   }
 
 
@@ -305,9 +378,15 @@ public class ArmyAntClient
 
 
 
-   private PacketToServer chooseActionsOfAllAnts(PacketToClient packetIn)
+  private PacketToServer chooseActionsOfAllAnts(PacketToClient packetIn)
   {
     PacketToServer packetOut = new PacketToServer(myTeam);
+
+    if (foodList!= null ) System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" );
+
+    updateAntGroups(packetIn.myAntList);
+
+
     gameLoopCounter += 1;
     if(gameLoopCounter > 50)
     {
@@ -347,12 +426,15 @@ public class ArmyAntClient
     }
 
 
+    int xSpawn = centerX;
+
     //updates the group first
     for (AntGroup group : groups)
     {
+
       if(toSpawn.contains(group))
       {
-        group.spawn(centerX,centerY);
+        group.spawn(xSpawn,centerY);
         group.setGoal(new PathNode(centerX + 70, centerY + 70));
         group.findPath();
         toSpawn.remove(group);
@@ -362,7 +444,10 @@ public class ArmyAntClient
         group.chooseAction();
       }
       packetOut.myAntList.addAll(group.getAntList());
+      xSpawn++;
     }
+
+    updateReceivedData (packetIn,packetOut);
 
     /*
     for (AntData ant : packetIn.myAntList)

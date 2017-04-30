@@ -36,10 +36,7 @@ public class PathFinder
   public ArrayList<PathNode> generatePath(PathNode start, PathNode goal)
   {
 
-    if(!nodeLegal(goal) || !nodeLegal(start))
-    {
-      return emptyList;
-    }
+
 
 
     ArrayList<PathNode> closedList = new ArrayList<PathNode>();
@@ -48,6 +45,11 @@ public class PathFinder
     ArrayList<PathNode> adjacencyList = new ArrayList<PathNode>();
     PathNode currentNode;
     boolean done = false;
+
+    if(!nodeLegal(goal) || !nodeLegal(start))
+    {
+      return emptyList;
+    }
 
     if ((start == null) || (goal == null))
     {

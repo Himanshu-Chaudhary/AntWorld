@@ -25,6 +25,17 @@ public abstract  class AntGroup
   int count;
   ArrayList<AntData> antlist = new ArrayList<>();
   Direction dir;
+  int currentPathSpot = 0;
+
+  int x;
+  int y;
+  ArrayList<PathNode> path = new ArrayList<PathNode>();
+  ArrayList<PathNode> emptyPath = new ArrayList<PathNode>();
+
+  int[][] relativePositions;
+
+  PathNode goal;
+  PathFinder pathFinder;
 
   //generate the number of ants needed for this group
 
@@ -41,15 +52,42 @@ public abstract  class AntGroup
     antlist.clear();
   }
 
+
+  /**
+   * Sets the goal of the group
+   * @param goal the location of the goal
+   */
+  public void setGoal(PathNode goal)
+  {
+    this.goal = goal;
+  }
+
+
+
+  /**
+   * Tells the group to find a path
+   * if not path is found, the just returns the current position
+   */
+  public void findPath()
+  {
+    PathNode start = new PathNode(x,y);
+    path = pathFinder.generatePath(start, goal);
+
+    if (path==null){
+      path.add(start);
+    }
+  }
+
+
+
   //the arrangement for each ant can be define with it spawn position
   abstract void spawn(int x, int y);
   abstract void chooseAction();
 
-  //
-  abstract void setGoal(PathNode goal);
-  abstract void findPath();
 
-  }
+  abstract void setUpPositions();
+
+}
 
 
 
